@@ -135,4 +135,5 @@ and in dashboard class thumbnails. Cover files are private to the class teacher
 and enrolled students; replacement/removal cleans up the previous file.
 #   u n i v e r s i t y - p o r t a l  
  #   u n i v e r s i t y - p o r t a l  
+ #   u n i v e r s i t y - p o r t a l  
  
