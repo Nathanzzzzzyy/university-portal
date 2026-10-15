@@ -1,0 +1,32 @@
+@extends('layouts.app')
+@section('title', 'Overview')
+@section('content')
+    <div class="page-intro"><div><span class="eyebrow">YOUR STUDENT SPACE</span><h2>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }}, {{ explode(' ', $user->name)[0] }} <span class="greeting-dot">.</span></h2><p>A little progress, every day. Here?s your academic overview.</p></div><span class="date-chip">{{ now()->format('l, M j, Y') }}</span></div>
+    <section class="campus-banner" aria-label="Welcome to your campus">
+        <div class="campus-copy"><span class="eyebrow">LEARN. CONNECT. GROW.</span><h2>Your next chapter<br>starts here.</h2><p>Stay on top of your subjects, plan your week, and make room for what?s next.</p><a class="btn" href="{{ route('student.enrollment') }}">Manage enrollment <span aria-hidden="true">?</span></a><div class="campus-signature"><span class="mini-seal">UC</span><span>University of the Cordilleras<br><b>Pangasinan</b></span></div></div>
+        <figure class="campus-photo"><img src="{{ asset('images/campus.png') }}" alt="Full view of the university campus"><figcaption><span class="live-dot"></span> A place to build your future</figcaption></figure>
+    </section>
+    <div class="stats overview-stats">
+        <div class="stat"><span class="stat-mark mint" aria-hidden="true">?</span><small>Enrolled subjects</small><b>{{ $enrollments->count() }}</b><span class="stat-note">This semester</span></div>
+        <div class="stat"><span class="stat-mark sand" aria-hidden="true">?</span><small>Current GPA</small><b>{{ $gpa !== null ? number_format($gpa, 2) : '?' }}</b><span class="stat-note">{{ $gpa !== null ? 'Based on posted grades' : 'Awaiting posted grades' }}</span></div>
+        <div class="stat"><span class="stat-mark lavender" aria-hidden="true">?</span><small>Academic load</small><b>{{ $units }} <em>units</em></b><span class="stat-note">Keep your goals in focus</span></div>
+        <a class="stat stat-link" href="{{ route('student.profile') }}"><span class="stat-mark sky" aria-hidden="true">?</span><small>Your program</small><b class="program-value">{{ $user->course ?: 'Not set' }}</b><span class="stat-note">{{ $user->year_level ?: 'Update your profile' }} ? View profile</span></a>
+    </div>
+    <div class="dashboard-columns">
+        <section class="card"><div class="section-head"><div><span class="eyebrow">KEEP THE MOMENTUM</span><h3>My learning space <span class="count-pill">{{ $enrollments->count() }}</span></h3></div><a href="{{ route('student.subjects') }}">All subjects ?</a></div>
+            @forelse($enrollments->take(4) as $e)
+                <a class="learning-row" href="{{ route('student.subjects') }}"><span class="course-monogram tone-{{ $loop->index % 4 }}">@if($e->subject->cover_photo_path)<img class="class-cover-thumb" src="{{ route('subjects.cover',$e->subject) }}" alt="" loading="lazy">@else{{ substr($e->subject->code, 0, 2) }}@endif</span><span class="learning-info"><b>{{ $e->subject->title }}</b><small>{{ $e->subject->code }} ? {{ $e->subject->units }} units ? {{ $e->subject->room ?: 'Room TBA' }}</small></span><span class="row-arrow" aria-hidden="true">?</span></a>
+            @empty
+                <div class="empty-state"><span class="empty-symbol" aria-hidden="true">?</span><h3>Your learning journey starts here</h3><p>Choose your subjects to bring your dashboard to life.</p><a class="btn" href="{{ route('student.enrollment') }}">Explore enrollment ?</a></div>
+            @endforelse
+        </section>
+        <section class="card progress-card"><span class="eyebrow">ONE STEP AT A TIME</span><h3>Semester snapshot</h3>@php($gradedCount = $enrollments->whereNotNull('grade')->count())<div class="progress-summary"><b>{{ $gradedCount }}<span> / {{ $enrollments->count() }}</span></b><p>subjects with posted grades</p></div><progress max="{{ max(1, $enrollments->count()) }}" value="{{ $gradedCount }}" aria-label="Subjects with posted grades"></progress><p class="muted">{{ $enrollments->count() ? 'Your results will appear as your teachers post them.' : 'Enroll in subjects to start tracking your semester.' }}</p><a class="text-link" href="{{ route('student.grades') }}">View academic record ?</a></section>
+    </div>
+    <div class="dashboard-columns">
+        <section class="card"><div class="section-head"><div><span class="eyebrow">AROUND THE CAMPUS</span><h3>The noticeboard</h3></div><a href="{{ route('student.announcements') }}">View all ?</a></div>@forelse($announcements->take(3) as $a)<a class="notice-row" href="{{ route('student.announcements') }}"><span class="notice-date"><b>{{ $a->published_at?->format('d') }}</b><small>{{ $a->published_at?->format('M') }}</small></span><span><b>{{ $a->title }}</b><p>{{ \Illuminate\Support\Str::limit($a->content, 95) }}</p></span><span class="row-arrow" aria-hidden="true">?</span></a>@empty<div class="quiet-state"><span class="badge">You?re all caught up</span><p>New campus announcements will appear here.</p></div>@endforelse</section>
+        <section class="card quick-card"><span class="eyebrow">MAKE IT A PRODUCTIVE DAY</span><h3>A shortcut to what matters</h3><div class="quick-links"><a href="{{ route('student.schedule') }}"><span>?</span><b>Class schedule</b><small>Plan your week ?</small></a><a href="{{ route('student.classwork') }}"><span>?</span><b>My classwork</b><small>Assignments & feedback ?</small></a><a href="{{ route('student.profile') }}"><span>?</span><b>My profile</b><small>Keep details up to date ?</small></a><a href="{{ route('student.enrollment') }}"><span>?</span><b>Enrollment</b><small>Manage your subjects ?</small></a></div></section>
+    </div>
+    @if($classwork->isNotEmpty())
+    <section class="card"><div class="section-head"><div><span class="eyebrow">YOUR NEXT STEPS</span><h3>Assignments to work on</h3></div><a href="{{ route('student.classwork') }}">Open classwork ?</a></div>@foreach($classwork as $submission)<a class="learning-row" href="{{ route('student.classwork') }}#classwork-{{ $submission->id }}"><span class="course-monogram tone-1">?</span><span class="learning-info"><b>{{ $submission->assignment->title }}</b><small>{{ $submission->assignment->subject->code }} ? Due {{ $submission->assignment->due_at->format('M j ? g:i A') }}</small></span><span class="badge {{ $submission->status() === 'Missing' ? 'warn' : '' }}">{{ $submission->status() }}</span><span class="row-arrow">?</span></a>@endforeach</section>
+    @endif
+@endsection
